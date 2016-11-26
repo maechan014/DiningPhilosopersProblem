@@ -3,6 +3,15 @@
 #include <stdlib.h>
 #include <vector>
 
+/**
+    Dining-Philosopher's Problem
+    In this simulator, the user is prompt to input the total number of philosophers,
+    the number of hungry philosophers, and the position of each philosopher on the table
+
+    @author Charie Mae
+**/
+
+
 using namespace std;
 
 class Philosopher {
@@ -13,14 +22,12 @@ public:
     bool isThinking;
     bool done;
     bool isHungry;
-    bool hasLeftChopstick;
-    bool hasRightChopstick;
 
     Philosopher(){
+        /* ids and positions are initialize as -1 because the indexes starts at 0*/
         id = -1;
         position = -1;
         isThinking = true;
-        isHungry = false;
     }
 
     void state(){
@@ -36,8 +43,6 @@ public:
         }
         cout << endl;
     }
-
-
 };
 
 class DiningPhilosophers {
@@ -56,7 +61,7 @@ public:
     void one_at_a_time(){
         for (int i = 0; i < philosopher.size(); i++){
             for (int curr = 0; curr < total_philosophers; curr++){
-                int adj = curr+1;
+                int adj = curr+1;   // will indicate the adjacent philosopher
 
                 /* if the adjacent reaches the last position, then it subtracts the value by itself to be in the first
                 position again since the position is in circular */
@@ -67,37 +72,91 @@ public:
                 /* iterates until the right position is found */
                 if (philosopher.at(curr).position == i){
                    if (philosopher.at(curr).isHungry){
-                        if(philosopher.at(curr).isThinking && philosopher.at(curr).isThinking && !(philosopher.at(curr).done)){
+                        // implies that if the adjacent philosopher is still thinking, then it does not have any chopstick yet.
+                        if(philosopher.at(curr).isThinking && philosopher.at(adj).isThinking && !(philosopher.at(curr).done)){
                             philosopher.at(curr).isThinking = false;
                             philosopher.at(curr).isEating = true;
                             philosopher.at(curr).done = true;
                             show_state();
                          }
+                        // after eating, the philosopher starts to think again.
                         philosopher.at(curr).isThinking = true;
                         philosopher.at(curr).isEating = false;
                     }
                     adj++;
                 }
             }
-
-
-
         }
     }
+    // end of one_at_a_time
+
+    /* this works the same as the one_at_a_time() but with extra loops inside*/
 
     void two_at_a_time(){
-        for (int curr = 0; !done;){
-           // if (hungry_philosophers)
-        }
+        for (int i = 0;i < philosopher.size(); i++){
+           for (int curr = 0; curr < total_philosophers; curr++){
+            int adj = curr+1, j;
+            int next = curr + 2;    // indicate the position of the philosopher a seat apart from the current philosopher
 
+                /* if the adjacent reaches the last position, then it subtracts the value by itself to be in the first
+                position again since the position is in circular */
+                if (adj >= hungry_philosophers){
+                    adj -= adj;
+                }
+
+                if (next >= hungry_philosophers){
+                    next -= next;
+                }
+
+                if (philosopher.at(curr).position == i){
+                    if (philosopher.at(curr).isHungry){
+                        if(philosopher.at(curr).isThinking && philosopher.at(adj).isThinking && !(philosopher.at(curr).done)){
+                            philosopher.at(curr).isThinking = false;
+                            philosopher.at(curr).isEating = true;
+                            philosopher.at(curr).done = true;
+
+                            for (j = next; j < total_philosophers; j++){
+                                int before = j-1;
+                                int after = j+1;
+
+                                if (after >= hungry_philosophers){
+                                    after -= after;
+                                }
+                                if (before < 0){
+                                    before = before + hungry_philosophers;
+                                }
+
+                                if(philosopher.at(j).isHungry && philosopher.at(after).isThinking && philosopher.at(before).isThinking){
+                                   philosopher.at(j).isThinking = false;
+                                   philosopher.at(j).isEating = true;
+                                   philosopher.at(j).done = true;
+                                   break;
+                                }
+                            }
+                            show_state();
+                            philosopher.at(j).isThinking = true;
+                            philosopher.at(j).isEating = false;
+                            philosopher.at(curr).isThinking = true;
+                            philosopher.at(curr).isEating = false;
+                        }
+                    }
+                }
+           }
+        }
     }
+    // end of two_at_a_time()
 
     void show_state(){
         for(int i = 0; i < philosopher.size(); i++){
-            philosopher.at(i).state();
+        for(int j = 0; j <total_philosophers; j++){
+            if (philosopher.at(j).position == i){
+                philosopher.at(j).state();
+            }
+        }
         }
         cout << endl;
     }
+    // end of show_state()
 
     void init(Philosopher p){
         bool valid, valid_position;
@@ -142,19 +201,8 @@ public:
             valid_position = false;
         }
     }
+    // end of init()
 
-
-   void print(){
-       for (int i = 0; i < total_philosophers; i++){
-        cout << "ID: " << philosopher.at(i).id << endl;
-        cout << "Position: " << philosopher.at(i).position << endl;
-        if (philosopher.at(i).isHungry)
-            cout << "Status: Hungry" << endl;
-        else
-            cout << "Status: Not Hungry" << endl;
-       }
-
-   }
 };
 
 int menu (){
@@ -196,14 +244,14 @@ int main(){
             philosophers.one_at_a_time();
             philosophers.show_state();
             clr();
-
         } else if (choice == 2){
             philosophers.init(p);
             philosophers.show_state();
-
+            philosophers.two_at_a_time();
+            philosophers.show_state();
+            clr();
         }
         philosophers.philosopher.clear();
-
     } while (choice != 3);
 
 return 0;
